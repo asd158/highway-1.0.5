@@ -1,0 +1,27 @@
+#include <benchmark/benchmark.h>
+#include <array>
+
+constexpr int len = 6;
+
+// constexpr function具有inline属性，你应该把它放在头文件中
+constexpr auto my_pow(const int i)
+{
+  return i * i;
+}
+
+// 使用operator[]读取元素，依次存入1-6的平方
+static void bench_array_operator(benchmark::State& state)
+{
+  std::array<int, len> arr;
+  constexpr int i = 1;
+  for (auto _: state) {
+    arr[0] = my_pow(i);
+    arr[1] = my_pow(i+1);
+    arr[2] = my_pow(i+2);
+    arr[3] = my_pow(i+3);
+    arr[4] = my_pow(i+4);
+    arr[5] = my_pow(i+5);
+  }
+}
+BENCHMARK(bench_array_operator);
+BENCHMARK_MAIN();

@@ -349,7 +349,8 @@ if(UNIX AND NOT APPLE)
     LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/hwy/hwy.version")
 endif()
 endif()  # HWY_ENABLE_CONTRIB
-#testing
+#############################################################################################
+###################################testing
 ADD_SUBDIRECTORY(googletest-1.13.0)
 SET(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 ENABLE_TESTING()
@@ -357,6 +358,11 @@ ADD_EXECUTABLE(test_${PROJECT_NAME}
                test/test1.cpp
                )
 TARGET_LINK_LIBRARIES(test_${PROJECT_NAME} PRIVATE gtest gtest_main)
+ADD_SUBDIRECTORY(benchmark-1.8.2)
+ADD_EXECUTABLE(bench_${PROJECT_NAME}
+               test/benchmark1.cpp
+               )
+TARGET_LINK_LIBRARIES(bench_${PROJECT_NAME} PRIVATE benchmark)
 
 #add_library(hwy_test ${HWY_LIBRARY_TYPE} ${HWY_TEST_SOURCES})
 #target_link_libraries(hwy_test PUBLIC hwy)
