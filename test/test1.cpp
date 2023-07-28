@@ -1,10 +1,9 @@
 #include <gtest/gtest.h>
+#include "hwy/detect_targets.h"
+#include "hwy/foreach_target.h"  // IWYU pragma: keep
+#include "hwy/aligned_allocator.h"
+#include "hwy/highway.h"
 
-class my {
- public:
-  void getAA() { std::cout << 11; }
-};
-TEST(test_my, getAA) {
-  my a;
-  a.getAA();
+TEST(test_my,
+     getAA) {
 }

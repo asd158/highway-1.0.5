@@ -65,7 +65,7 @@ set(HWY_CMAKE_SSE2 OFF CACHE BOOL "Set SSE2 as baseline for 32-bit x86?")
 # arise due to compiler/platform changes. Enable this in CI/tests.
 set(HWY_WARNINGS_ARE_ERRORS OFF CACHE BOOL "Add -Werror flag?")
 
-set(HWY_ENABLE_CONTRIB OFF CACHE BOOL "Include contrib/")
+set(HWY_ENABLE_CONTRIB ON CACHE BOOL "Include contrib/")
 set(HWY_ENABLE_EXAMPLES OFF CACHE BOOL "Build examples")
 set(HWY_ENABLE_INSTALL OFF CACHE BOOL "Install library")
 set(HWY_ENABLE_TESTS OFF CACHE BOOL "Enable HWY tests")
@@ -350,53 +350,53 @@ if(UNIX AND NOT APPLE)
 endif()
 endif()  # HWY_ENABLE_CONTRIB
 #############################################################################################
-###################################testing
+###################################todo..GWYtesting##########################################
 ADD_SUBDIRECTORY(googletest-1.13.0)
 SET(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 ENABLE_TESTING()
 ADD_EXECUTABLE(test_${PROJECT_NAME}
                test/test1.cpp
                )
-TARGET_LINK_LIBRARIES(test_${PROJECT_NAME} PRIVATE gtest gtest_main)
+TARGET_LINK_LIBRARIES(test_${PROJECT_NAME} PRIVATE gtest gtest_main hwy)
 ADD_SUBDIRECTORY(benchmark-1.8.2)
 ADD_EXECUTABLE(bench_${PROJECT_NAME}
                test/benchmark1.cpp
                )
-TARGET_LINK_LIBRARIES(bench_${PROJECT_NAME} PRIVATE benchmark)
+TARGET_LINK_LIBRARIES(bench_${PROJECT_NAME} PRIVATE benchmark hwy)
+#############################################################################################
+add_library(hwy_test ${HWY_LIBRARY_TYPE} ${HWY_TEST_SOURCES})
+target_link_libraries(hwy_test PUBLIC hwy)
+target_compile_options(hwy_test PRIVATE ${HWY_FLAGS})
+set_property(TARGET hwy_test PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_target_properties(hwy_test PROPERTIES VERSION ${LIBRARY_VERSION} SOVERSION ${LIBRARY_SOVERSION})
+target_include_directories(hwy_test PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_compile_features(hwy_test PUBLIC cxx_std_11)
+set_target_properties(hwy_test PROPERTIES
+  LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/hwy/hwy.version)
+# not supported by MSVC/Clang, safe to skip (we use DLLEXPORT annotations)
+if(UNIX AND NOT APPLE)
+  set_property(TARGET hwy_test APPEND_STRING PROPERTY
+    LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/hwy/hwy.version")
+endif()
 
-#add_library(hwy_test ${HWY_LIBRARY_TYPE} ${HWY_TEST_SOURCES})
-#target_link_libraries(hwy_test PUBLIC hwy)
-#target_compile_options(hwy_test PRIVATE ${HWY_FLAGS})
-#set_property(TARGET hwy_test PROPERTY POSITION_INDEPENDENT_CODE ON)
-#set_target_properties(hwy_test PROPERTIES VERSION ${LIBRARY_VERSION} SOVERSION ${LIBRARY_SOVERSION})
-#target_include_directories(hwy_test PUBLIC
-#    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-#    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-#target_compile_features(hwy_test PUBLIC cxx_std_11)
-#set_target_properties(hwy_test PROPERTIES
-#  LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/hwy/hwy.version)
-## not supported by MSVC/Clang, safe to skip (we use DLLEXPORT annotations)
-#if(UNIX AND NOT APPLE)
-#  set_property(TARGET hwy_test APPEND_STRING PROPERTY
-#    LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/hwy/hwy.version")
-#endif()
-#
-## -------------------------------------------------------- hwy_list_targets
-## Generate a tool to print the compiled-in targets as defined by the current
-## flags. This tool will print to stderr at build time, after building hwy.
-#add_executable(hwy_list_targets hwy/tests/list_targets.cc)
-#target_compile_options(hwy_list_targets PRIVATE ${HWY_FLAGS})
-#target_link_libraries(hwy_list_targets PRIVATE hwy)
-#target_include_directories(hwy_list_targets PRIVATE
-#  $<TARGET_PROPERTY:hwy,INCLUDE_DIRECTORIES>)
-## TARGET_FILE always returns the path to executable
-## Naked target also not always could be run (due to the lack of '.\' prefix)
-## Thus effective command to run should contain the full path
-## and emulator prefix (if any).
-#if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
-#add_custom_command(TARGET hwy_list_targets POST_BUILD
-#    COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:hwy_list_targets> || (exit 0))
-#endif()
+# -------------------------------------------------------- hwy_list_targets
+# Generate a tool to print the compiled-in targets as defined by the current
+# flags. This tool will print to stderr at build time, after building hwy.
+add_executable(hwy_list_targets hwy/tests/list_targets.cc)
+target_compile_options(hwy_list_targets PRIVATE ${HWY_FLAGS})
+target_link_libraries(hwy_list_targets PRIVATE hwy)
+target_include_directories(hwy_list_targets PRIVATE
+  $<TARGET_PROPERTY:hwy,INCLUDE_DIRECTORIES>)
+# TARGET_FILE always returns the path to executable
+# Naked target also not always could be run (due to the lack of '.\' prefix)
+# Thus effective command to run should contain the full path
+# and emulator prefix (if any).
+if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
+add_custom_command(TARGET hwy_list_targets POST_BUILD
+    COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:hwy_list_targets> || (exit 0))
+endif()
 #
 ## --------------------------------------------------------
 ## Allow skipping the following sections for projects that do not need them:
@@ -468,17 +468,17 @@ TARGET_LINK_LIBRARIES(bench_${PROJECT_NAME} PRIVATE benchmark)
 ## Avoids mismatch between GTest's static CRT and our dynamic.
 #set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 #
-## Programming exercise with integrated benchmark
-#add_executable(hwy_benchmark hwy/examples/benchmark.cc)
-#target_sources(hwy_benchmark PRIVATE
-#    hwy/nanobenchmark.h)
-## Try adding one of -DHWY_COMPILE_ONLY_SCALAR, -DHWY_COMPILE_ONLY_EMU128 or
-## -DHWY_COMPILE_ONLY_STATIC to observe the difference in targets printed.
-#target_compile_options(hwy_benchmark PRIVATE ${HWY_FLAGS})
-#target_link_libraries(hwy_benchmark PRIVATE hwy)
-#target_link_libraries(hwy_benchmark PRIVATE ${ATOMICS_LIBRARIES})
-#set_target_properties(hwy_benchmark
-#    PROPERTIES RUNTIME_OUTPUT_DIRECTORY "examples/")
+# Programming exercise with integrated benchmark
+add_executable(hwy_benchmark hwy/examples/benchmark.cc)
+target_sources(hwy_benchmark PRIVATE
+    hwy/nanobenchmark.h)
+# Try adding one of -DHWY_COMPILE_ONLY_SCALAR, -DHWY_COMPILE_ONLY_EMU128 or
+# -DHWY_COMPILE_ONLY_STATIC to observe the difference in targets printed.
+target_compile_options(hwy_benchmark PRIVATE ${HWY_FLAGS})
+target_link_libraries(hwy_benchmark PRIVATE hwy)
+target_link_libraries(hwy_benchmark PRIVATE ${ATOMICS_LIBRARIES})
+set_target_properties(hwy_benchmark
+    PROPERTIES RUNTIME_OUTPUT_DIRECTORY "examples/")
 #
 #endif()  # HWY_ENABLE_EXAMPLES
 ## -------------------------------------------------------- Tests

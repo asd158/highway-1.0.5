@@ -24,4 +24,7 @@ static void bench_array_operator(benchmark::State& state)
   }
 }
 BENCHMARK(bench_array_operator);
-BENCHMARK_MAIN();
+//BENCHMARK_MAIN();
+int main(){
+    benchmark::RunSpecifiedBenchmarks();
+}
