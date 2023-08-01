@@ -328,27 +328,27 @@ if(UNIX AND NOT APPLE)
   set_property(TARGET hwy APPEND_STRING PROPERTY
     LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/hwy/hwy.version")
 endif()
-
-if (HWY_ENABLE_CONTRIB)
-add_library(hwy_contrib ${HWY_LIBRARY_TYPE} ${HWY_CONTRIB_SOURCES})
-target_link_libraries(hwy_contrib PUBLIC hwy)
-target_compile_options(hwy_contrib PRIVATE ${HWY_FLAGS})
-set_property(TARGET hwy_contrib PROPERTY POSITION_INDEPENDENT_CODE ON)
-set_target_properties(hwy_contrib PROPERTIES VERSION ${LIBRARY_VERSION} SOVERSION ${LIBRARY_SOVERSION})
-target_include_directories(hwy_contrib PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_compile_features(hwy_contrib PUBLIC cxx_std_11)
-set_target_properties(hwy_contrib PROPERTIES
-  LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/hwy/hwy.version)
-# For GCC __atomic_store_8, see #887
-target_link_libraries(hwy_contrib PRIVATE ${ATOMICS_LIBRARIES})
-# not supported by MSVC/Clang, safe to skip (we use DLLEXPORT annotations)
-if(UNIX AND NOT APPLE)
-  set_property(TARGET hwy_contrib APPEND_STRING PROPERTY
-    LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/hwy/hwy.version")
-endif()
-endif()  # HWY_ENABLE_CONTRIB
+#
+#if (HWY_ENABLE_CONTRIB)
+#add_library(hwy_contrib ${HWY_LIBRARY_TYPE} ${HWY_CONTRIB_SOURCES})
+#target_link_libraries(hwy_contrib PUBLIC hwy)
+#target_compile_options(hwy_contrib PRIVATE ${HWY_FLAGS})
+#set_property(TARGET hwy_contrib PROPERTY POSITION_INDEPENDENT_CODE ON)
+#set_target_properties(hwy_contrib PROPERTIES VERSION ${LIBRARY_VERSION} SOVERSION ${LIBRARY_SOVERSION})
+#target_include_directories(hwy_contrib PUBLIC
+#    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+#    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+#target_compile_features(hwy_contrib PUBLIC cxx_std_11)
+#set_target_properties(hwy_contrib PROPERTIES
+#  LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/hwy/hwy.version)
+## For GCC __atomic_store_8, see #887
+#target_link_libraries(hwy_contrib PRIVATE ${ATOMICS_LIBRARIES})
+## not supported by MSVC/Clang, safe to skip (we use DLLEXPORT annotations)
+#if(UNIX AND NOT APPLE)
+#  set_property(TARGET hwy_contrib APPEND_STRING PROPERTY
+#    LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/hwy/hwy.version")
+#endif()
+#endif()  # HWY_ENABLE_CONTRIB
 #############################################################################################
 ###################################todo..GWYtesting##########################################
 ADD_SUBDIRECTORY(googletest-1.13.0)
@@ -362,7 +362,8 @@ ADD_SUBDIRECTORY(benchmark-1.8.2)
 ADD_EXECUTABLE(bench_${PROJECT_NAME}
                test/benchmark1.cpp
                )
-TARGET_LINK_LIBRARIES(bench_${PROJECT_NAME} PRIVATE benchmark hwy)
+TARGET_LINK_LIBRARIES(bench_${PROJECT_NAME} PRIVATE  ${ATOMICS_LIBRARIES} benchmark hwy)
+TARGET_COMPILE_OPTIONS(bench_${PROJECT_NAME} PRIVATE ${HWY_FLAGS})
 #############################################################################################
 add_library(hwy_test ${HWY_LIBRARY_TYPE} ${HWY_TEST_SOURCES})
 target_link_libraries(hwy_test PUBLIC hwy)

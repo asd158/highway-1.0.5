@@ -1,30 +1,51 @@
 #include <benchmark/benchmark.h>
-#include <array>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "hwy/aligned_allocator.h"
+#include "hwy/base.h"
 
-constexpr int len = 6;
+// clang-format off
+#undef HWY_TARGET_INCLUDE
+#define HWY_TARGET_INCLUDE "test/benchmark1.cpp"
 
-// constexpr function具有inline属性，你应该把它放在头文件中
-constexpr auto my_pow(const int i)
-{
-  return i * i;
-}
+#include "hwy/foreach_target.h"  // IWYU pragma: keep
+#include "hwy/highway.h"
+#include "hwy/contrib/dot/dot-inl.h"
 
-// 使用operator[]读取元素，依次存入1-6的平方
-static void bench_array_operator(benchmark::State& state)
-{
-  std::array<int, len> arr;
-  constexpr int i = 1;
-  for (auto _: state) {
-    arr[0] = my_pow(i);
-    arr[1] = my_pow(i+1);
-    arr[2] = my_pow(i+2);
-    arr[3] = my_pow(i+3);
-    arr[4] = my_pow(i+4);
-    arr[5] = my_pow(i+5);
-  }
+HWY_BEFORE_NAMESPACE();
+namespace hwy {
+    namespace HWY_NAMESPACE {
+        template<typename T>
+        HWY_NOINLINE T SimpleDot(const T *pa,
+                                 const T *pb,
+                                 size_t num) {
+            double      sum = 0.0;
+            for (size_t i   = 0;
+                 i < num;
+                 ++i) {
+                sum += pa[i] * pb[i];
+            }
+            return static_cast<T>(sum);
+        }
+
+        HWY_NOINLINE float SimpleDot(const bfloat16_t *pa,
+                                     const bfloat16_t *pb,
+                                     size_t num) {
+            float       sum = 0.0f;
+            for (size_t i   = 0;
+                 i < num;
+                 ++i) {
+                sum += F32FromBF16(pa[i]) * F32FromBF16(pb[i]);
+            }
+            return sum;
+        }
+    }
 }
-BENCHMARK(bench_array_operator);
-//BENCHMARK_MAIN();
-int main(){
-    benchmark::RunSpecifiedBenchmarks();
+HWY_AFTER_NAMESPACE();
+
+#if HWY_ONCE
+int main() {
+    return 0;
 }
+#endif
